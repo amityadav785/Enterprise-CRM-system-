@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise CRM System</title>
+  <style>
+    :root {
+      --bg-color: #f4f6f9;
+      --card-bg: #ffffff;
+      --primary: #2563eb;
+      --text-dark: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --sidebar-width: 240px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      display: flex;
+      height: 100vh;
+      background-color: var(--bg-color);
+      color: var(--text-dark);
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      width: var(--sidebar-width);
+      background-color: #0f172a;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 1rem;
+    }
+
+    .sidebar h2 {
+      font-size: 1.25rem;
+      margin-bottom: 2rem;
+      color: #38bdf8;
+    }
+
+    .nav-links {
+      list-style: none;
+      flex: 1;
+    }
+
+    .nav-links li {
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #94a3b8;
+      transition: all 0.2s;
+    }
+
+    .nav-links li:hover, .nav-links li.active {
+      background-color: #1e293b;
+      color: #fff;
+    }
+
+    /* Role Switcher Widget */
+    .role-switcher {
+      border-top: 1px solid #334155;
+      padding-top: 1rem;
+    }
+
+    .role-switcher select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      border-radius: 4px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #fff;
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    header {
+      background-color: var(--card-bg);
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .view-container {
+      padding: 2rem;
+      display: none;
+    }
+
+    .view-container.active {
+      display: block;
+    }
+
+    /* Component: KPI Dashboard Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .kpi-card {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid var(--border-color);
+    }
+
+    .kpi-card h4 {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .kpi-card .value {
+      font-size: 1.75rem;
+      font-weight: bold;
+    }
+
+    /* Component: Pipeline / Kanban Board */
+    .kanban-board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    .kanban-column {
+      background: #e2e8f0;
+      padding: 1rem;
+      border-radius: 8px;
+      min-height: 400px;
+    }
+
+    .kanban-column h3 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: var(--text-dark);
+    }
+
+    .deal-card {
+      background: var(--card-bg);
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 0.75rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      cursor: grab;
+    }
+
+    .deal-card h4 {
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .deal-card p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Component: Activity Log Table */
+    .log-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card-bg);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .log-table th, .log-table td {
+      padding: 0.85rem 1.25rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .log-table th {
+      background-color: #f8fafc;
+      font-weight: 600;
+    }
+
+    /* Admin Restricted Banner */
+    .restricted-notice {
+      background-color: #fef2f2;
+      color: #991b1b;
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>Enterprise CRM</h2>
+    <ul class="nav-links">
+      <li class="active" onclick="switchTab('dashboard')">Dashboard</li>
+      <li onclick="switchTab('pipeline')">Sales Pipeline</li>
+      <li onclick="switchTab('activities')">Activity Logs</li>
+    </ul>
+
+    <!-- Role-Based Access Control Switcher -->
+    <div class="role-switcher">
+      <label for="userRole" style="font-size: 0.8rem; color: #94a3b8;">User Role:</label>
+      <select id="userRole" onchange="handleRoleChange(this.value)">
+        <option value="admin">Admin</option>
+        <option value="sales_rep">Sales Rep</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <header>
+      <h1 id="page-title">Dashboard</h1>
+      <span id="role-badge" style="background:#e0f2fe; color:#0369a1; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; font-weight:600;">Role: Admin</span>
+    </header>
+
+    <!-- View 1: Dashboard -->
+    <div id="view-dashboard" class="view-container active">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <h4>Total Pipeline Value</h4>
+          <div class="value">$142,500</div>
+        </div>
+        <div class="kpi-card">
+          <h4>Active Leads</h4>
+          <div class="value">28</div>
+        </div>
+        <div class="kpi-card">
+          <h4>Conversion Rate</h4>
+          <div class="value">24.5%</div>
+        </div>
+      </div>
+
+      <!-- Admin-Only Performance Section -->
+      <div id="admin-performance-section">
+        <h3>Team Sales Performance (Admin Only)</h3>
+        <table class="log-table" style="margin-top: 1rem;">
+          <thead>
+            <tr>
+              <th>Sales Rep</th>
+              <th>Deals Closed</th>
+              <th>Revenue Generated</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Alex Johnson</td>
+              <td>12</td>
+              <td>$64,000</td>
+            </tr>
+            <tr>
+              <td>Sarah Parker</td>
+              <td>9</td>
+              <td>$48,500</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="restricted-msg" class="restricted-notice">
+        ⚠️ Some metrics are hidden for <strong>Sales Rep</strong> role. Log in as <strong>Admin</strong> for full access.
+      </div>
+    </div>
+
+    <!-- View 2: Sales Pipeline -->
+    <div id="view-pipeline" class="view-container">
+      <div class="kanban-board">
+        <div class="kanban-column">
+          <h3>New Leads</h3>
+          <div class="deal-card">
+            <h4>Acme Corp Integration</h4>
+            <p>Value: $12,000</p>
+          </div>
+          <div class="deal-card">
+            <h4>Global Logistics Software</h4>
+            <p>Value: $25,000</p>
+          </div>
+        </div>
+
+        <div class="kanban-column">
+          <h3>In Negotiation</h3>
+          <div class="deal-card">
+            <h4>TechStart Expansion</h4>
+            <p>Value: $18,000</p>
+          </div>
+        </div>
+
+        <div class="kanban-column">
+          <h3>Closed Won</h3>
+          <div class="deal-card">
+            <h4>FinTech App Renewal</h4>
+            <p>Value: $45,000</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- View 3: Activity Logs -->
+    <div id="view-activities" class="view-container">
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Contact</th>
+            <th>Details</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Email Sent</strong></td>
+            <td>john@acme.com</td>
+            <td>Followed up on pricing proposal</td>
+            <td>Today, 10:30 AM</td>
+          </tr>
+          <tr>
+            <td><strong>Call Logged</strong></td>
+            <td>sarah@techstart.io</td>
+            <td>Discussed API requirements</td>
+            <td>Yesterday, 2:15 PM</td>
+          </tr>
+          <tr>
+            <td><strong>Email Received</strong></td>
+            <td>m.davis@fintech.com</td>
+            <td>Contract signed and returned</td>
+            <td>2 days ago</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    // Tab Switching Functionality
+    function switchTab(tabId) {
+      // Hide all views
+      document.querySelectorAll('.view-container').forEach(view => {
+        view.classList.remove('active');
+      });
+
+      // Deactivate all sidebar items
+      document.querySelectorAll('.nav-links li').forEach(li => {
+        li.classList.remove('active');
+      });
+
+      // Show target view & set active class
+      document.getElementById(`view-${tabId}`).classList.add('active');
+      event.currentTarget.classList.add('active');
+
+      // Update Page Title
+      const titleMap = {
+        'dashboard': 'Dashboard',
+        'pipeline': 'Sales Pipeline',
+        'activities': 'Email & Activity Logs'
+      };
+      document.getElementById('page-title').innerText = titleMap[tabId];
+    }
+
+    // Role-Based Access Control (RBAC) Switcher logic
+    function handleRoleChange(role) {
+      const badge = document.getElementById('role-badge');
+      const adminSection = document.getElementById('admin-performance-section');
+      const restrictedMsg = document.getElementById('restricted-msg');
+
+      if (role === 'admin') {
+        badge.innerText = 'Role: Admin';
+        badge.style.background = '#e0f2fe';
+        badge.style.color = '#0369a1';
+        
+        adminSection.style.display = 'block';
+        restrictedMsg.style.display = 'none';
+      } else {
+        badge.innerText = 'Role: Sales Rep';
+        badge.style.background = '#fef3c7';
+        badge.style.color = '#92400e';
+
+        adminSection.style.display = 'none';
+        restrictedMsg.style.display = 'block';
+      }
+    }
+    const mongoose = require('mongoose');
+
+// Lead / Deal Schema
+const LeadSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  value: { type: Number, required: true },
+  stage: { 
+    type: String, 
+    enum: ['New', 'In Negotiation', 'Closed Won', 'Closed Lost'], 
+    default: 'New' 
+  },
+  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+// Activity / Email Log Schema
+const ActivityLogSchema = new mongoose.Schema({
+  type: { type: String, enum: ['Email', 'Call', 'Meeting'], required: true },
+  contact: { type: String, required: true },
+  details: { type: String, required: true },
+  performedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = {
+  Lead: mongoose.model('Lead', LeadSchema),
+  ActivityLog: mongoose.model('ActivityLog', ActivityLogSchema)
+};
+
+  </script>
+</body>
+</html>
